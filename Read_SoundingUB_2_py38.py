@@ -1,10 +1,7 @@
-##script to read the txt dat from radiosounding and generates skew plot and geograhic movements
-## script valid in python 3.8. or upper
-
-##The script is created by Barcelona soundings, if you want to change the location name detaled in png you must change the text in line 486
+##programa per llegir els arxius txt del sondeig de la facultat de física UBA
+##genera els gàfics de temperatura vers la pressió
 
 ##By Albert Garcia Benadí
-##ORCID:     0000-0002-5560-4392
 
 
 import os
@@ -145,9 +142,7 @@ def ReadFile(fileid):
     lat=np.array(lat)
     lon=np.array(lon)
 
-    p_m = P * units.hPa
-    t_m = T * units.degC
-    td_m = Td * units.degC
+    
 ##    print(p_m)
 ##    print(lat)
 ##    fig=plt.figure()
@@ -172,12 +167,8 @@ def ReadFile(fileid):
 ##    plt.show()
 
 
-    
+########    DELETE THE POINTS WHERE THE DOWNWARDS SGLOBUS MOVEMENTS
 
-    U=np.sin(VelD*np.pi/180)*VelM
-    V=np.cos(VelD*np.pi/180)*VelM
-
-    u, v = mpcalc.wind_components(VelM*units.kt, VelD*units.deg)#the result i u and v in knots. it is necessary introduce velD in radians
 
     test=[]
     for k in range(len(P)-1):
@@ -185,26 +176,43 @@ def ReadFile(fileid):
     test=np.asarray(test)
 ##    print(test)
     if any(test<0):
+##        print('\nhi haura problema\n')
+        Pc=[];Tc=[];Tdc=[];VelMc=[];VelDc=[];Hc=[]
+        for i in range(len(P)):
+            if i==0:
+                Pc.append(P[i]);Tc.append(T[i]);Tdc.append(Td[i]);VelMc.append(VelM[i]);VelDc.append(VelD[i]);Hc.append(H[i])
+            else:
+                if P[i]-Pc[-1]<=0:
+                    Pc.append(P[i]);Tc.append(T[i]);Tdc.append(Td[i]);VelMc.append(VelM[i]);VelDc.append(VelD[i]);Hc.append(H[i])
+        P=np.copy(Pc)
+        T=np.copy(Tc)
+        Td=np.copy(Tdc)
+        VelM=np.copy(VelMc)
+        VelD=np.copy(VelDc)
+        H=np.copy(Hc)
         
-##        p_m = medfilt(P, 5) * units.hPa
-##        t_m= medfilt(T, 5) * units.degC
-##        td_m=medfilt(Td, 5) * units.degC
-        ##print('nou pressure',p_m)
-        for i in range(len(test)):
-            if test[i]<0:
+
+##        for i in range(len(test)):
+##            if test[i]<0:
 ##                print('index xungo',i,'altura',H[i])
-                Index=i-2
-                break
-        p_m = P[0:Index] * units.hPa
-        t_m= T[0:Index] * units.degC
-        td_m=Td[0:Index] * units.degC
+##                Index=i-2
+##                break
+##        p_m = P[0:Index] * units.hPa
+##        t_m= T[0:Index] * units.degC
+##        td_m=Td[0:Index] * units.degC
 
 
-##        print('hi haura problema')
-    else:
-        Index=len(P)
         
     
+    p_m = P * units.hPa
+    t_m= T * units.degC
+    td_m=Td * units.degC
+
+        
+    U=-1.*np.sin(VelD*np.pi/180)*VelM
+    V=-1.*np.cos(VelD*np.pi/180)*VelM
+    u, v = mpcalc.wind_components(VelM*units('m/s'), VelD*units.deg)#the result i u and v in knots. it is necessary introduce velD in radians
+    ##u, v = mpcalc.wind_components(VelM*units.kt, VelD*units.deg)#the result i u and v in knots. it is necessary introduce velD in radians
     prof = mpcalc.parcel_profile(p_m, t_m[0], td_m[0])
     
     
@@ -214,15 +222,20 @@ def ReadFile(fileid):
         MinPres=100.
     else:
         MinPres=minPres
+    
     IndxMin=np.where(P<=MinPres)[0];indxMin=IndxMin[0]
+##    print('\n Minima pressio',MinPres,'al index ',indxMin,'\n')
     In850=np.where(P-850.<0)[0];ind850=In850[0]-1
+##    if isnull(np.where(P-500.<0)[0]):
+##        ind500=np.nan
+##    else:
     In500=np.where(P-500.<0)[0];ind500=In500[0]-1
-    In300=np.where(P-300.<0)[0];ind300=In300[0]-1
+####    In300=np.where(P-300.<0)[0];ind300=In300[0]-1
     In600=np.where(P-600.<0)[0];ind600=In600[0]-1
-    In750=np.where(P-750.<0)[0];ind750=In750[0]-1
+##    In750=np.where(P-750.<0)[0];ind750=In750[0]-1
     In700=np.where(P-700.<0)[0];ind700=In700[0]-1
-    In650=np.where(P-650.<0)[0];ind650=In650[0]-1
-    In645=np.where(P-645.<0)[0];ind645=In645[0]-1
+##    In650=np.where(P-650.<0)[0];ind650=In650[0]-1
+##    In645=np.where(P-645.<0)[0];ind645=In645[0]-1
     
     if P[0]<1000.:#la pressio a H[0] es inferior a 1000 hPa
         t1=T[0];t2=T[1];p1=P[0];p2=P[1];
@@ -249,9 +262,9 @@ def ReadFile(fileid):
 
     # Plot the data using normal plotting functions, in this case using
     # log scaling in Y, as dictated by the typical meteorological plot
-    skew.plot(P[0:Index], T[0:Index], 'r',label='Temperatura')
-    skew.plot(P[0:Index], Td[0:Index], 'b',linestyle='dashed',label='Punt de rosada')
-    skew.plot(P[0:Index], prof[0:Index], 'k',label='parcel')  # Plot parcel profile
+    skew.plot(P, T, 'r',label='Ambient')
+    skew.plot(P, Td, 'b',linestyle='dashed',label='Punt de rosada')
+    skew.plot(P, prof, 'k',label='Partícula')  # Plot parcel profile
 
     lcl_pressure, lcl_temperature = mpcalc.lcl(p_m[0], t_m[0], td_m[0])
 ##    print(lcl_pressure, lcl_temperature)
@@ -259,11 +272,19 @@ def ReadFile(fileid):
     rat=mpcalc.saturation_mixing_ratio(1000*units.hPa,t1000*units.degC)
     rat1=mpcalc.saturation_mixing_ratio(p_m,td1000*units.degC)
     Inrat=np.where(rat1-rat<=0)[0]
-##    print('CCL',P[Inrat[0]],Inrat[0])
+##    print(Inrat)
+    if len(Inrat)==0:
+##        print('CCL','----','----')
+        Prat=np.nan
+                
+    else:
+        
+##        print('CCL',P[Inrat[0]],Inrat[0])
+        Prat=P[Inrat[0]]
     
     skew.plot(lcl_pressure, lcl_temperature, 'ko', markerfacecolor='black',label='LCL')
-    skew.ax.set_ylabel('hPa')
-    skew.ax.set_xlabel('Celsius')
+    skew.ax.set_ylabel('Pressi'+u'\xf3'+' (hPa)')
+    skew.ax.set_xlabel('Temperatura (Celsius)')
 
     
     # An example of a slanted line at constant T -- in this case the 0 isotherm
@@ -285,8 +306,12 @@ def ReadFile(fileid):
 ##    print('nou cape',prcape,prcin)
 
     pw = mpcalc.precipitable_water(p_m[:indxMin],td_m[:indxMin])
-    TT=(T[ind850]-T[ind500])+(Td[ind850]-T[ind500])
-    Pam_K=(T[ind850]-T[ind500])+Td[ind850]-(T[ind700]-Td[ind700])
+    if np.isnan(ind500):
+        TT=np.nan
+        Pam_K=np.nan
+    else:
+        TT=(T[ind850]-T[ind500])+(Td[ind850]-T[ind500])
+        Pam_K=(T[ind850]-T[ind500])+Td[ind850]-(T[ind700]-Td[ind700])
 
     EL=mpcalc.el(p_m,t_m,td_m,prof)
 ##    print('tem,p per LI',T[ind500]*units.degC,prof[ind500].to('degC'))
@@ -312,8 +337,18 @@ def ReadFile(fileid):
     tempot2=mpcalc.equivalent_potential_temperature(mu[0],mu[1].to(units.K),mu[2].to(units.K))
 
     capeU,cinU=mpcalc.most_unstable_cape_cin(p_m,t_m,td_m)
-    U_CAPE=int(capeU/(units.joule / units.kilogram))
-    U_CIN=int(cinU/(units.joule / units.kilogram))
+    if np.isnan(cinU):
+        U_CIN=np.nan
+    else:
+        U_CIN=int(cinU/(units.joule / units.kilogram))
+    if np.isnan(capeU):
+        U_CAPE=np.nan
+    else:
+        U_CAPE=int(capeU/(units.joule / units.kilogram))
+        
+        
+    #U_CAPE=int(capeU/(units.joule / units.kilogram))
+    
     #print('u_cape',U_CAPE)
 
 
@@ -321,15 +356,20 @@ def ReadFile(fileid):
 ##################HODOGRAF
     h1_srh=3#en km
     indH=np.where(H-(h1_srh*1000.)>=0)[0];IndH=indH[0]
+    
     uT=u[:IndH];vT=v[:IndH];VelMT=VelM[:IndH];PT=p_m[:IndH];HT=H[:IndH]*units.meter
+##    print('\n igual que abans',indxMin,'\n')
     uTg=u[:indxMin];vTg=v[:indxMin];PTg=p_m[:indxMin]
+##    print('\nhand e ser iguals els tres ',len(uTg),len(vTg),len(PTg),'\n')
     skew.plot_barbs(PTg[::100], uTg[::100], vTg[::100],xloc=1.0)#, y_clip_radius=0.03)
     skew.ax.set_ylim(np.max(p_m), MinPres)
     n_p=np.arange(1000,0,-100)
     n_h=pressure_to_height_std(n_p*units.hPa)
-##    print('nova altura',n_h)
+
+    
     for pp,hh in zip(n_p,n_h):
-        skew.ax.text(1.05,pp,round(hh.m,1),transform=skew.ax.get_yaxis_transform(which='tick2'),va='center')
+        skew.ax.text(-.17,pp,round(hh.m,1),transform=skew.ax.get_yaxis_transform(which='tick2'), color='b',fontsize=10,fontstyle='italic',va='center')
+    skew.ax.text(-95,350,'Altitud (km)',fontsize=10,color='b',fontstyle='italic',rotation=90)
 ##    ax8=skew.ax.twinx()
 ##    ax8.spines['right'].set_position('center')
 ##    adjust_spines(skew.ax, ['right'])
@@ -350,13 +390,13 @@ def ReadFile(fileid):
 ####################    secax_y2.set_major_formatter(FormatStrFormatter('%.1f'))
     
     ########    STORM MOVEMENT
-    right_mover,left_mover,wind_mean = mpcalc.bunkers_storm_motion(P* units.hPa, U* units('m/s'), V* units('m/s'), H*units.meter)
+    right_mover,left_mover,wind_mean = mpcalc.bunkers_storm_motion(p_m, u, v, H*units.meter)
 ##    print('storm mover right',right_mover)
 ##    print('storm mover left',left_mover)
 ##    print('storm wind wind',wind_mean)
 
-    SRH=mpcalc.storm_relative_helicity(H*units.meter,u,v,h1_srh * units.km)
-    Ang_Crt=mpcalc.critical_angle(P* units.hPa, u, v, H*units.meter, right_mover[0], right_mover[1])
+    SRH=mpcalc.storm_relative_helicity(H*units.meter,u,v,h1_srh * units.m)
+    Ang_Crt=mpcalc.critical_angle(p_m, u, v, H*units.meter, right_mover[0], right_mover[1])
 ##    print(Ang_Crt,np.max(Ang_Crt))
 ##    print('SRH ',SRH)
     srh=float(SRH[2]/(units.meter**2/units.second**2))#valor del storm_relative_helicity 
@@ -370,7 +410,7 @@ def ReadFile(fileid):
 ##    print('incr',nearest_multiple)
 
     ax4 = fig.add_subplot(gs[0:2, 2])
-    m = Basemap(llcrnrlon=-6.,llcrnrlat=35.,urcrnrlon=6.,urcrnrlat=45.,\
+    m = Basemap(llcrnrlon=-3.,llcrnrlat=39.,urcrnrlon=5.,urcrnrlat=45.,\
                 rsphere=(6378137.00,6356752.3142),\
                 resolution='i',projection='merc',\
                 lat_0=41.,lon_0=2.)
@@ -382,7 +422,7 @@ def ReadFile(fileid):
     m.drawcoastlines()
     m.fillcontinents(lake_color='#99ffff',alpha=0.4)
     # draw parallels
-    m.drawparallels(np.arange(36,46,2),labels=[1,0,0,0])
+    m.drawparallels(np.arange(36,48,2),labels=[1,0,0,0])
     # draw meridians
     m.drawmeridians(np.arange(-4,6,2),labels=[0,0,0,1])
 
@@ -391,27 +431,34 @@ def ReadFile(fileid):
 
     
     ax2 = fig.add_subplot(gs[0:2, 3])
+    Speed=mpcalc.wind_speed(wind_mean[0], wind_mean[1])
+    Direc=mpcalc.wind_direction(wind_mean[0], wind_mean[1],'to')
+    StmSpeed=round(float(Speed/ (units.meter / units.second)),1)#nusos respecte el vent calculat amb el srh
+    StmDir=round(float(Direc/units.degree),1)#graus respecte el vent calculat amb el srh
     
     h = Hodograph(ax2, component_range=nearest_multiple)
     if nearest_multiple<=15:
         Incr=5
-        amplada=3
+        amplada=1
     else:
         Incr=20
-        amplada=1
+        if np.nanmax(StmSpeed)>25:
+            
+            amplada=2
+        else:
+            amplada=1
     h.add_grid(increment=Incr)
 ##    h.plot(u, v)
-    l=h.plot_colormapped(uT, vT,PT,linewidth=5,intervals=50.)  # Plot a line colored in pressure function
+    l=h.plot_colormapped(uT, vT,PT,linewidth=5,intervals=50.,alpha=.6)  # Plot a line colored in pressure function
     plt.colorbar(l,label='Pressure')
     plt.title('nusos de 0 a '+str(h1_srh)+' km')
-    Speed=mpcalc.wind_speed(wind_mean[0], wind_mean[1])
-    Direc=mpcalc.wind_direction(wind_mean[0], wind_mean[1],'to')
+##    Speed=mpcalc.wind_speed(wind_mean[0], wind_mean[1])
+##    Direc=mpcalc.wind_direction(wind_mean[0], wind_mean[1],'to')
 
-    StmSpeed=round(float(Speed/ (units.meter / units.second)),1)#nusos respecte el vent calculat amb el srh
-    StmDir=round(float(Direc/units.degree),1)#graus respecte el vent calculat amb el srh
     
     
-    h.wind_vectors(-1.*wind_mean[0],-1.* wind_mean[1],width=amplada)#LA LINEA SHA DE FER MES AMPLA,fico els vectors al reves, ja que covection =to
+    
+    h.wind_vectors(wind_mean[0],wind_mean[1],width=amplada,alpha=.5)#LA LINEA SHA DE FER MES AMPLA,fico els vectors al reves, ja que covection =to
 
     EHI=round(float((U_CAPE*srh )/160000),2)
 ##    print('EHI',EHI)
@@ -431,8 +478,8 @@ def ReadFile(fileid):
     ax5= fig.add_subplot(gs[2, 3])
     ax5.text(0.5, .80, 'Hod'+r'$\grave o$'+'grafa at '+str(h1_srh)+' km', fontsize=12, color='r',fontweight="bold", va="center", ha="center")
 ##    ax3.text(0.5, 0.95, 'EHI = '+str(EHI)+r'${m}^{2}{s}^{-2}$', fontsize=8, fontweight="bold", va="center", ha="center")
-    ax5.text(0.5, 0.60, 'EH = '+('%5.1f' % (SRH[2]/ ((units.meter * units.meter) / (units.second * units.second))))+' '+r'${m}^{2}{s}^{-2}$', fontsize=8, fontweight="bold", va="center", ha="center")
-    ax5.text(0.5, 0.40, 'SRH = '+('%5.1f' % (SRH[1]/ ((units.meter * units.meter) / (units.second * units.second))))+' '+r'${m}^{2}{s}^{-2}$', fontsize=8, fontweight="bold", va="center", ha="center")
+    ax5.text(0.5, 0.60, 'EH = '+('%5.1f' % (SRH[2]/ ((units.meter * units.meter) / (units.second * units.second))))+' '+r'$\mathbf{{m}^{2}{s}^{-2}}$', fontsize=8, fontweight="bold", va="center", ha="center")
+    ax5.text(0.5, 0.40, 'SRH = '+('%5.1f' % (SRH[1]/ ((units.meter * units.meter) / (units.second * units.second))))+' '+r'$\mathbf{{m}^{2}{s}^{-2}}$', fontsize=8, fontweight="bold", va="center", ha="center")
     ax5.text(0.5, 0.20, 'StmDir = '+str(StmDir)+' Graus', fontsize=8, fontweight="bold", va="center", ha="center")
     ax5.text(0.5, 0.00, 'StmSpd = '+str(StmSpeed)+' Nusos', fontsize=8, fontweight="bold", va="center", ha="center")
     ax5.set_xticks([])
@@ -443,7 +490,7 @@ def ReadFile(fileid):
     ax3.text(0.5, 0.98, 'P'+r'$\grave a$'+'rametres generals', fontsize=12, color='r',fontweight="bold", va="center", ha="center")
     ax3.text(0.5, 0.84, 'Isozero height = '+str(round(ISOZH,1))+' m', fontsize=8, fontweight="bold", va="center", ha="center")
     ax3.text(0.5, 0.70, 'LCL = '+('%5.1f' % (lcl_pressure / units.hPa))+' hPa', fontsize=8, fontweight="bold", va="center", ha="left")
-    ax3.text(0.5, 0.70, 'NCC = '+str(P[Inrat[0]])+' hPa   ', fontsize=8, fontweight="bold", va="center", ha="right")
+    ax3.text(0.5, 0.70, 'NCC = '+str(Prat)+' hPa   ', fontsize=8, fontweight="bold", va="center", ha="right")
     ax3.text(0.5, 0.56, 'PW = '+('%5.2f' % (pw / units.mm))+' mm  ', fontsize=8, fontweight="bold", va="center", ha="right")
     ax3.text(0.5, 0.56, 'EHI = '+str(EHI), fontsize=8, fontweight="bold", va="center", ha="left")
     ax3.text(0.5, 0.42, 'TT = '+str(round(TT,0))+' Celsius', fontsize=8, fontweight="bold", va="center", ha="left")
@@ -514,3 +561,4 @@ for a in d:
     
     print('Processing file ',a)
     ReadFile(a)
+
