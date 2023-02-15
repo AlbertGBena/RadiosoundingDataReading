@@ -305,7 +305,9 @@ def ReadFile(fileid):
     prcape, prcin = mpcalc.cape_cin(p_m, t_m, td_m, prof)
 ##    print('nou cape',prcape,prcin)
 
-    pw = mpcalc.precipitable_water(p_m[:indxMin],td_m[:indxMin])
+    ##pw = mpcalc.precipitable_water(p_m[:indxMin],td_m[:indxMin])
+    pw = mpcalc.precipitable_water(p_m[:ind500],td_m[:ind500])
+##    print(pw,pw_2)
     if np.isnan(ind500):
         TT=np.nan
         Pam_K=np.nan
@@ -488,21 +490,21 @@ def ReadFile(fileid):
 
     ax3 = fig.add_subplot(gs[3:5, 2])
     ax3.text(0.5, 0.98, 'P'+r'$\grave a$'+'rametres generals', fontsize=12, color='r',fontweight="bold", va="center", ha="center")
-    ax3.text(0.5, 0.84, 'Isozero height = '+str(round(ISOZH,1))+' m', fontsize=8, fontweight="bold", va="center", ha="center")
-    ax3.text(0.5, 0.70, 'LCL = '+('%5.1f' % (lcl_pressure / units.hPa))+' hPa', fontsize=8, fontweight="bold", va="center", ha="left")
-    ax3.text(0.5, 0.70, 'NCC = '+str(Prat)+' hPa   ', fontsize=8, fontweight="bold", va="center", ha="right")
-    ax3.text(0.5, 0.56, 'PW = '+('%5.2f' % (pw / units.mm))+' mm  ', fontsize=8, fontweight="bold", va="center", ha="right")
-    ax3.text(0.5, 0.56, 'EHI = '+str(EHI), fontsize=8, fontweight="bold", va="center", ha="left")
-    ax3.text(0.5, 0.42, 'TT = '+str(round(TT,0))+' Celsius', fontsize=8, fontweight="bold", va="center", ha="left")
-    ax3.text(0.5, 0.42, 'K = '+str(round(Pam_K,0))+' Celsius  ', fontsize=8, fontweight="bold", va="center", ha="right")
+    ax3.text(0.5, 0.86, 'Isozero height = '+str(round(ISOZH,1))+' m', fontsize=8, fontweight="bold", va="center", ha="center")
+    ax3.text(0.5, 0.74, 'LCL = '+('%5.1f' % (lcl_pressure / units.hPa))+' hPa', fontsize=8, fontweight="bold", va="center", ha="left")
+    ax3.text(0.5, 0.74, 'NCC = '+str(Prat)+' hPa   ', fontsize=8, fontweight="bold", va="center", ha="right")
+    ax3.text(0.5, 0.62, 'PW (up to 500 hPa) = '+('%5.2f' % (pw / units.mm))+' mm  ', fontsize=8, fontweight="bold", va="center", ha="center")
+    ax3.text(0.5, 0.50, 'EHI = '+str(EHI), fontsize=8, fontweight="bold", va="center", ha="center")
+    ax3.text(0.5, 0.38, 'TT = '+str(round(TT,0))+' Celsius', fontsize=8, fontweight="bold", va="center", ha="left")
+    ax3.text(0.5, 0.38, 'K = '+str(round(Pam_K,0))+' Celsius  ', fontsize=8, fontweight="bold", va="center", ha="right")
     if np.isnan(float(lfc_pressure/units.hPa)):
-        ax3.text(0.5, 0.28, 'LFC = ---- hPa', fontsize=8, fontweight="bold", va="center", ha="left")
+        ax3.text(0.5, 0.26, 'LFC = ---- hPa', fontsize=8, fontweight="bold", va="center", ha="left")
     else:
-        ax3.text(0.5, 0.28, 'LFC = '+('%5.2f' % (lfc_pressure / units.hPa))+' hPa'  , fontsize=8, fontweight="bold", va="center", ha="left")
+        ax3.text(0.5, 0.26, 'LFC = '+('%5.2f' % (lfc_pressure / units.hPa))+' hPa'  , fontsize=8, fontweight="bold", va="center", ha="left")
     if np.isnan(float(EL[0]/units.hPa)):
-        ax3.text(0.5, 0.28, 'EL = ---- hPa  '  , fontsize=8, fontweight="bold", va="center", ha="right")
+        ax3.text(0.5, 0.26, 'EL = ---- hPa  '  , fontsize=8, fontweight="bold", va="center", ha="right")
     else:
-        ax3.text(0.5, 0.28, 'EL = '+('%5.2f' % (EL[0] / units.hPa))+' hPa  ', fontsize=8, fontweight="bold", va="center", ha="right")
+        ax3.text(0.5, 0.26, 'EL = '+('%5.2f' % (EL[0] / units.hPa))+' hPa  ', fontsize=8, fontweight="bold", va="center", ha="right")
     ax3.text(0.5, 0.14, 'LI = '+(str(round(li,2)))+' Celsius  ', fontsize=8, fontweight="bold", va="center", ha="right")
     ax3.text(0.5, 0.14, 'T(850hPa) = '+(str(round(T[ind850],1)))+' Celsius  ', fontsize=8, fontweight="bold", va="center",  ha="left")
 
