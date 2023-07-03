@@ -343,7 +343,7 @@ def ReadFile(fileid):
         U_CIN=np.nan
     else:
         U_CIN=int(cinU/(units.joule / units.kilogram))
-    if np.isnan(capeU):
+    if np.isnan(capeU) or np.isinf(capeU):
         U_CAPE=np.nan
     else:
         U_CAPE=int(capeU/(units.joule / units.kilogram))
